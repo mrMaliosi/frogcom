@@ -1,5 +1,6 @@
 from datetime import datetime
 from fastapi import Request, HTTPException
+from typing import Dict
 from frogcom.api.routes.base import BaseRoutes
 from frogcom.api.dto.models import LLMConfigResponse, LLMConfigRequest
 from frogcom.internal.services.llm_service import LLMService
@@ -66,8 +67,11 @@ class LLMConfigRoutes(BaseRoutes):
     ) -> LLMConfigResponse:
         """Обновляет конфигурацию выбранной LLM."""
         try:
+            print(llm_id)
             svc = self._get_llm_by_id(llm_id, request)
+            print(svc)
             updated_config = svc.update_config(config_request)
+            print("updated")
             self.logging_service.log_response(
                 {
                     "event": "llm_config_updated",

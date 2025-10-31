@@ -21,3 +21,7 @@ class BaseRoutes:
         self.orchestrator = orchestrator
         self.prompt_service = PromptService()
         self.router = APIRouter()
+
+    def get_router(self) -> APIRouter:
+        """Возвращает настроенный роутер для регистрации в FastAPI."""
+        return self.router

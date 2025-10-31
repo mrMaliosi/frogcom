@@ -48,7 +48,7 @@ class GenerateRoutes(BaseRoutes):
             response = GenerateResponse(
                 id=request_id,
                 created=int(datetime.now().timestamp()),
-                model=self.llm_service.get_model_name(),
+                model=self.llm_service_primary.get_model_name(),
                 choices=[
                     Choice(
                         index=0,

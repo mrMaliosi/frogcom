@@ -26,16 +26,15 @@ class LLMService:
     
     def _initialize_llm(self) -> None:
         """Инициализирует LLM модель."""
-        with self._lock:
-            if self._llm is not None:
-                # Освобождаем ресурсы предыдущей модели
-                del self._llm
-                time.sleep(8)
-            
-            try:
-                self._llm = LLM(**self._config.to_dict())
-            except Exception as e:
-                raise RuntimeError(f"Не удалось инициализировать LLM: {e}")
+        if self._llm is not None:
+            # Освобождаем ресурсы предыдущей модели
+            del self._llm
+            time.sleep(8)
+        
+        try:
+            self._llm = LLM(**self._config.to_dict())
+        except Exception as e:
+            raise RuntimeError(f"Не удалось инициализировать LLM: {e}")
     
     def get_config(self) -> LLMConfigResponse:
         """Возвращает текущую конфигурацию LLM."""
@@ -72,12 +71,16 @@ class LLMService:
             if config_request.seed is not None:
                 self._config.seed = config_request.seed
             
+            print("configured")
+            
             # Переинициализируем модель если изменились критические параметры
             critical_params_changed = (
                 config_request.model_name is not None or
                 config_request.gpu_memory_utilization is not None or
                 config_request.disable_log_stats is not None
             )
+            
+            print(critical_params_changed)
             
             if critical_params_changed:
                 self._initialize_llm()
