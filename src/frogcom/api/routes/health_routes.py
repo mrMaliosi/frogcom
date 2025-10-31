@@ -13,22 +13,44 @@ class HealthRoutes(BaseRoutes):
 
     def _setup_routes(self):
         self.router.add_api_route(
-            "/health",
-            self.health_check,
+            "/health/main-model",
+            self.health_check_primary,
             methods=["GET"],
             response_model=HealthResponse,
-            summary="Проверка состояния сервиса",
-            description="Возвращает статус сервиса и информацию о загруженной модели"
+            summary="Проверка состояния основной модели",
+            description="Возвращает статус основной модели"
         )
 
-    async def health_check(self) -> HealthResponse:
+        self.router.add_api_route(
+            "/health/secondary-model",
+            self.health_check_secondary,
+            methods=["GET"],
+            response_model=HealthResponse,
+            summary="Проверка состояния вспомогательной модели",
+            description="Возвращает статус вспомогательной модели"
+        )
+
+    async def health_check_primary(self) -> HealthResponse:
         """Проверка состояния сервиса."""
         try:
             return HealthResponse(
                 status="healthy",
                 timestamp=datetime.now(),
                 version=config.api.version,
-                model_loaded=self.llm_service.is_loaded(),
+                model_loaded=self.llm_service_primary.is_loaded(),
+            )
+        except Exception as e:
+            self.logging_service.log_error(e)
+            raise HTTPException(status_code=500, detail=f"Ошибка проверки: {str(e)}")
+
+    async def health_check_secondary(self) -> HealthResponse:
+        """Проверка состояния сервиса."""
+        try:
+            return HealthResponse(
+                status="healthy",
+                timestamp=datetime.now(),
+                version=config.api.version,
+                model_loaded=self.llm_service_secondary.is_loaded(),
             )
         except Exception as e:
             self.logging_service.log_error(e)

@@ -6,6 +6,7 @@
 """
 
 import threading
+import time
 from typing import List, Optional, Dict, Any
 from vllm import LLM, SamplingParams
 
@@ -29,6 +30,7 @@ class LLMService:
             if self._llm is not None:
                 # Освобождаем ресурсы предыдущей модели
                 del self._llm
+                time.sleep(8)
             
             try:
                 self._llm = LLM(**self._config.to_dict())

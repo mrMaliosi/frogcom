@@ -107,7 +107,7 @@ class AppConfig:
             ),
             llm=LLMConfig(
                 model_name=os.getenv("LLM_MODEL", "Qwen/Qwen2.5-0.5B-Instruct"),
-                gpu_memory_utilization=float(os.getenv("GPU_MEMORY_UTILIZATION", "0.5")),
+                gpu_memory_utilization=float(os.getenv("GPU_MEMORY_UTILIZATION", "0.4")),
                 disable_log_stats=os.getenv("DISABLE_LOG_STATS", "false").lower() == "true",
                 max_tokens=int(os.getenv("MAX_TOKENS", "4096")),
                 temperature=float(os.getenv("TEMPERATURE", "0.7")),
@@ -115,7 +115,7 @@ class AppConfig:
             ),
             secondary_llm=LLMConfig(
                 model_name=os.getenv("LLM_MODEL_SECONDARY", "Qwen/Qwen2.5-0.5B-Instruct"),
-                gpu_memory_utilization=float(os.getenv("GPU_MEMORY_UTILIZATION_SECONDARY", "0.5")),
+                gpu_memory_utilization=float(os.getenv("GPU_MEMORY_UTILIZATION_SECONDARY", "0.4")),
                 disable_log_stats=os.getenv("DISABLE_LOG_STATS_SECONDARY", "false").lower() == "true",
                 max_tokens=int(os.getenv("MAX_TOKENS_SECONDARY", "512")),
                 temperature=float(os.getenv("TEMPERATURE_SECONDARY", "0.7")),
@@ -125,7 +125,7 @@ class AppConfig:
                 host=os.getenv("API_HOST", "0.0.0.0"),
                 port=int(os.getenv("API_PORT", "8888")),
                 reload=os.getenv("API_RELOAD", "true").lower() == "true",
-                rate_limit=int(os.getenv("API_RATE_LIMIT", "60")),
+                rate_limit=int(os.getenv("API_RATE_LIMIT", "500")),
                 cors_origins=os.getenv("API_CORS_ORIGINS", "*").split(","),
                 max_request_size=int(os.getenv("API_MAX_REQUEST_SIZE", str(10 * 1024 * 1024))),
                 api_key=os.getenv("API_KEY"),

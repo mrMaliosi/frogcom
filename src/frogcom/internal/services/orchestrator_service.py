@@ -93,7 +93,7 @@ class OrchestratorService:
                 f"Исходный ответ:\n{primary_answer}\n\n"
                 f"Уточнения/вопросы второй модели:\n{secondary_guidance}\n\n"
                 f"Обнови свой ответ, учитывая уточнения."
-                f"Сделай вывод согласно тз: {user_prompt}"
+                f"Сделай вывод согласно техническому заданию: {user_prompt}"
             )
             primary_answer = self.primary.generate_text(
                 prompts=[followup_prompt],

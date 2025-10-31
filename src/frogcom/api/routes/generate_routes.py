@@ -31,7 +31,6 @@ class GenerateRoutes(BaseRoutes):
         try:
             data = req.model_dump()             # TODO: exclude_unset=True - добавить в release
             prompt = self.prompt_service.extract_prompt(data)
-
             if not prompt.strip():
                 raise HTTPException(status_code=400, detail="Не предоставлен промпт")
 
@@ -59,8 +58,8 @@ class GenerateRoutes(BaseRoutes):
                 ],
             )
             
-            if not answer or not str(answer).strip():
-                raise HTTPException(status_code=500, detail="Пустой ответ от модели")
+            #if not answer or not str(answer).strip():
+            #    raise HTTPException(status_code=500, detail="Пустой ответ от модели")
 
             self.logging_service.log_response({"response": response.model_dump()})
             return response

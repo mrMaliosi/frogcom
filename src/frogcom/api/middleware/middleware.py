@@ -7,14 +7,50 @@ Middleware для API FrogCom.
 
 import json
 import time
+
 from typing import Callable, Optional
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
+
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
+from frogcom.config.config import config
 from frogcom.internal.services.logging_service import LoggingService
 
+
+def init_middleware(app : FastAPI, logging_service : LoggingService):
+    """ Настраиваем middleware (порядок важен - последний добавленный выполняется первым) """
+    # 1. Обработка ошибок (должен быть первым)
+    app.add_middleware(ErrorHandlingMiddleware, logging_service=logging_service)
+    
+    # 2. Мониторинг производительности
+    app.add_middleware(MonitoringMiddleware)
+    
+    # 3. Ограничение скорости запросов
+    app.add_middleware(RateLimitMiddleware, requests_per_minute=config.api.rate_limit)
+    
+    # 4. Аутентификация (если настроена)
+    if config.api.api_key:
+        app.add_middleware(AuthenticationMiddleware, api_key=config.api.api_key)
+    
+    # 5. Безопасность
+    app.add_middleware(SecurityMiddleware, max_request_size=config.api.max_request_size)
+    
+    # 6. Логирование
+    app.add_middleware(LoggingMiddleware, logging_service=logging_service)
+    
+    # 7. CORS (должен быть последним)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=config.api.cors_origins,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["*"],
+    )
 
 class LoggingMiddleware(BaseHTTPMiddleware):
     """Middleware для логирования HTTP запросов и ответов."""
@@ -35,10 +71,8 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         # Обрабатываем запрос
         response = await call_next(request)
         
-        # Вычисляем время обработки
         process_time = time.time() - start_time
         
-        # Логируем ответ
         response_data = {
             "status_code": response.status_code,
             "headers": dict(response.headers),
