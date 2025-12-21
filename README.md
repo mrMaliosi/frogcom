@@ -37,6 +37,14 @@ curl -X POST "http://localhost:8888/generate" \
     "temperature": 0.7
   }'
 
+curl -X POST "http://localhost:8888/generate" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Создайте русскоязычную документацию для функции. Формат документации должен соответствовать стандартам языка программирования:\n- Python: Google-style Docstring.\n- Go: GoDoc.\n- Java: JavaDoc.\n- JavaScript: JSDoc.\n- C#: XML-документация.\n\nФункция:\n@Override\n    @Transactional\n    public OperatingSystemDTO editPartOfEntity(Integer operatingSystemId, OperatingSystemDTO operatingSystemDTO) {\n        var persistentOperatingSystem = getPersistentEntityById(operatingSystemId);\n        nullableMapper.map(operatingSystemDTO, persistentOperatingSystem);\n        operatingSystemRepository.save(persistentOperatingSystem);\n        return mapper.map(persistentOperatingSystem, OperatingSystemDTO.class);\n    }\n\nВыведите только готовый блок документации. Никаких пояснений, комментариев или дополнительного текста добавлять не нужно.",
+    "max_tokens": 512
+  }'
+
+
 # Настройка оркестрации
 curl -X PUT "http://localhost:8888/config/orchestration" \
   -H "Content-Type: application/json" \

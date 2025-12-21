@@ -29,8 +29,10 @@ class GenerateRoutes(BaseRoutes):
         - Сообщения в формате чата через поле 'messages'
         """
         try:
+            print(req)
             data = req.model_dump()             # TODO: exclude_unset=True - добавить в release
             prompt = self.prompt_service.extract_prompt(data)
+
             if not prompt.strip():
                 raise HTTPException(status_code=400, detail="Не предоставлен промпт")
 
@@ -40,7 +42,7 @@ class GenerateRoutes(BaseRoutes):
                 max_tokens=req.max_tokens,
                 temperature=req.temperature,
                 top_p=req.top_p,
-                stop=req.stop,
+                stop=[], #req.stop,
                 seed=req.seed,
                 request_id=request_id,
             )

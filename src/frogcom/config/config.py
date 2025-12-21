@@ -38,6 +38,7 @@ class LLMConfig:
     
     model_name: str = "facebook/opt-125m"
     gpu_memory_utilization: float = 0.5
+    max_model_len: int = 4096
     disable_log_stats: bool = False
     max_tokens: int = 256
     temperature: float = 0.7
@@ -50,6 +51,7 @@ class LLMConfig:
         config = {
             "model": self.model_name,
             "gpu_memory_utilization": self.gpu_memory_utilization,
+            "max_model_len": self.max_model_len,
             "disable_log_stats": self.disable_log_stats,
         }
         return config
@@ -62,7 +64,11 @@ class OrchestrationConfig:
     communication_rounds: int = 1  # сколько раз общаться со второй моделью
     secondary_goal_prompt: str = (
         "Ты — проверяющий ассистент. Проанализируй ответ и предложи уточняющие вопросы, "
-        "которые помогут улучшить ответ. Верни только список вопросов или указания."
+        "которые помогут улучшить ответ. Верни ТОЛЬКО список вопросов, которые могут помочь улучшить ответ."
+        "Без объяснений. Без дополнений. Только список вопросов."
+        "Пример вывода:"
+        "- Какие конкретные недопустимые символы могут привести к IllegalArgumentException?"
+        "- Какова максимальная длина текстового запроса в текущей реализации?"
     )
     enabled: bool = True
 
@@ -106,19 +112,21 @@ class AppConfig:
                 log_ttl_days=int(os.getenv("LOG_TTL_DAYS", "7")),
             ),
             llm=LLMConfig(
-                model_name=os.getenv("LLM_MODEL", "Qwen/Qwen2.5-0.5B-Instruct"),
-                gpu_memory_utilization=float(os.getenv("GPU_MEMORY_UTILIZATION", "0.4")),
+                model_name=os.getenv("LLM_MODEL", "Qwen/Qwen3-4B-Instruct-2507"),
+                gpu_memory_utilization=float(os.getenv("GPU_MEMORY_UTILIZATION", "0.85")),
+                max_model_len=int(os.getenv("MAX_MODEL_LEN", "4096")),
                 disable_log_stats=os.getenv("DISABLE_LOG_STATS", "false").lower() == "true",
-                max_tokens=int(os.getenv("MAX_TOKENS", "65536")),
-                temperature=float(os.getenv("TEMPERATURE", "0.7")),
+                max_tokens=int(os.getenv("MAX_TOKENS", "4096")),
+                temperature=float(os.getenv("TEMPERATURE", "0.4")),
                 top_p=float(os.getenv("TOP_P", "0.9")),
             ),
             secondary_llm=LLMConfig(
-                model_name=os.getenv("LLM_MODEL_SECONDARY", "Qwen/Qwen2.5-0.5B-Instruct"),
-                gpu_memory_utilization=float(os.getenv("GPU_MEMORY_UTILIZATION_SECONDARY", "0.4")),
+                model_name=os.getenv("LLM_MODEL_SECONDARY", "Qwen/Qwen3-4B-Instruct-2507"),
+                gpu_memory_utilization=float(os.getenv("GPU_MEMORY_UTILIZATION_SECONDARY", "0.85")),
+                max_model_len=int(os.getenv("MAX_MODEL_LEN", "4096")),
                 disable_log_stats=os.getenv("DISABLE_LOG_STATS_SECONDARY", "false").lower() == "true",
-                max_tokens=int(os.getenv("MAX_TOKENS_SECONDARY", "65536")),
-                temperature=float(os.getenv("TEMPERATURE_SECONDARY", "0.7")),
+                max_tokens=int(os.getenv("MAX_TOKENS_SECONDARY", "4096")),
+                temperature=float(os.getenv("TEMPERATURE_SECONDARY", "0.4")),
                 top_p=float(os.getenv("TOP_P_SECONDARY", "0.9")),
             ),
             api=APIConfig(
@@ -133,8 +141,7 @@ class AppConfig:
             orchestration=OrchestrationConfig(
                 communication_rounds=int(os.getenv("COMMUNICATION_ROUNDS", "1")),
                 secondary_goal_prompt=os.getenv("SECONDARY_GOAL_PROMPT", (
-                    "Ты — проверяющий ассистент. Проанализируй ответ и предложи уточняющие вопросы, "
-                    "которые помогут улучшить ответ. Верни только список вопросов или указания."
+                    "Задача: Ты — программист, которому необходимо понять что делает данная функция. Проанализируй предложенный комментарий и задай 3 вопроса. Верни только список вопросов.\n Входные данные:"
                 )),
                 enabled=os.getenv("ORCHESTRATION_ENABLED", "true").lower() == "true",
             ),
