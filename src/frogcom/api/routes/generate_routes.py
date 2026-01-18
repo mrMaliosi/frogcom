@@ -29,7 +29,6 @@ class GenerateRoutes(BaseRoutes):
         - Сообщения в формате чата через поле 'messages'
         """
         try:
-            print(req)
             data = req.model_dump()             # TODO: exclude_unset=True - добавить в release
             prompt = self.prompt_service.extract_prompt(data)
 
@@ -39,7 +38,7 @@ class GenerateRoutes(BaseRoutes):
             request_id = f"frogcom-{datetime.now().timestamp()}"
             answer = self.orchestrator.generate_with_orchestration(
                 user_prompt=prompt,
-                max_tokens=req.max_tokens,
+                max_tokens=self.llm_service_primary.get_config().max_tokens,
                 temperature=req.temperature,
                 top_p=req.top_p,
                 stop=[], #req.stop,
