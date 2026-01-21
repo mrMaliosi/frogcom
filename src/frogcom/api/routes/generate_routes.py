@@ -1,7 +1,7 @@
 from datetime import datetime
 from fastapi import Request, HTTPException
 from frogcom.api.routes.base import BaseRoutes
-from frogcom.api.dto.models import GenerateRequest, GenerateResponse, Choice, Message
+from frogcom.api.dto.models import GenerateRequest, GenerateResponse, Choice, Message, CommentRequest, CommentResponse
 
 class GenerateRoutes(BaseRoutes):
     """Маршруты генерации текста."""
@@ -12,15 +12,69 @@ class GenerateRoutes(BaseRoutes):
 
     def _setup_routes(self):
         self.router.add_api_route(
-            "/generate",
-            self.generate_text,
+            "/test",
+            self.generate_test,
             methods=["POST"],
             response_model=GenerateResponse,
             summary="Генерация текста",
             description="Генерирует текст на основе промпта или сообщений"
         )
 
-    async def generate_text(self, request: Request, req: GenerateRequest) -> GenerateResponse:
+    def _setup_routes(self):
+        self.router.add_api_route(
+            "/generate",
+            self.generate_comment,
+            methods=["POST"],
+            response_model=CommentResponse,
+            summary="Генерация текста",
+            description="Генерирует текст на основе промпта или сообщений"
+        )
+
+    async def generate_comment(self, request: Request, req: CommentRequest) -> CommentResponse:
+        """
+        Генерирует комментарий на основе предобработанного запроса.
+        """
+        try:
+            data = req.model_dump()             # TODO: exclude_unset=True - добавить в release
+            prompt = self.prompt_service.extract_prompt(data)
+
+            if not prompt.strip():
+                raise HTTPException(status_code=400, detail="Не предоставлен промпт")
+
+            request_id = f"frogcom-{datetime.now().timestamp()}"
+            answer = self.orchestrator.generate_with_orchestration(
+                user_prompt=prompt,
+                max_tokens=self.llm_service_primary.get_config().max_tokens,
+                temperature=req.temperature,
+                top_p=req.top_p,
+                stop=[], #req.stop,
+                seed=req.seed,
+                request_id=request_id,
+            )
+
+            response = GenerateResponse(
+                id=request_id,
+                created=int(datetime.now().timestamp()),
+                model=self.llm_service_primary.get_model_name(),
+                choices=[
+                    Choice(
+                        index=0,
+                        message=Message(role="assistant", content=answer),
+                        finish_reason="generation success",
+                    )
+                ],
+            )
+            
+            #if not answer or not str(answer).strip():
+            #    raise HTTPException(status_code=500, detail="Пустой ответ от модели")
+
+            self.logging_service.log_response({"response": response.model_dump()})
+            return response
+        except Exception as e:
+            self.logging_service.log_error(e, {"request": data})
+            raise HTTPException(status_code=500, detail=f"Ошибка генерации: {str(e)}")
+
+    async def generate_test(self, request: Request, req: GenerateRequest) -> GenerateResponse:
         """
         Генерирует текст на основе промпта или сообщений.
         

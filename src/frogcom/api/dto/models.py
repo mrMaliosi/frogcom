@@ -111,3 +111,18 @@ class OrchestrationConfigResponse(BaseModel):
     enabled: bool = Field(..., description="Оркестрация включена")
     communication_rounds: int = Field(..., description="Количество раундов")
     secondary_goal_prompt: str = Field(..., description="Целевой промпт второй модели")
+
+
+class CommentResponse(BaseModel):
+    """Модель Ответа для списка комментариев к функциям."""
+
+    comment: str = Field(..., description="Список комментариев к функциям")
+    function: str = Field(..., description="Сами функции (список дат?)")
+
+
+class CommentRequest(BaseModel):
+    """Модель запроса для создания комментариев к списку функций."""
+
+    task: str = Field(..., description="Список задач/комментариев к функциям")
+    function: str = Field(..., description="Список самих функций")
+
