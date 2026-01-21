@@ -66,3 +66,6 @@ htmlcov/
 Thumbs.db
 
 .save_logs
+
+#uv
+uv.lock
