@@ -3,7 +3,8 @@
 
 Этот модуль содержит Pydantic модели для валидации входящих и исходящих данных.
 """
-
+import ast
+from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field
 from datetime import datetime
@@ -116,13 +117,37 @@ class OrchestrationConfigResponse(BaseModel):
 class CommentResponse(BaseModel):
     """Модель Ответа для списка комментариев к функциям."""
 
-    comment: str = Field(..., description="Список комментариев к функциям")
-    function: str = Field(..., description="Сами функции (список дат?)")
+    comment: str = Field(..., description="Комментарий к функции")
 
 
 class CommentRequest(BaseModel):
     """Модель запроса для создания комментариев к списку функций."""
 
-    task: str = Field(..., description="Список задач/комментариев к функциям")
-    function: str = Field(..., description="Список самих функций")
+    task: str = Field(..., description="Задача к функции")
+    code: str = Field(..., description="Сама функций")
+    function: str = Field(..., description="Распаршенная функция")
 
+@dataclass
+class FunctionDescription:
+    full_function_text: str
+    function_text: str
+    docstring: Optional[str] = None
+    full_function_lines_length: int = 0
+    function_lines_length: int = 0
+    docstring_lines_length: Optional[int] = 0
+    name: str = None
+    qualified_name: str = None
+    namespace: Optional[str] = None
+    signature_text: str = ""
+    return_type: Optional[str] = None
+    parameters: list[str] = field(default_factory=list)
+    start_line: int = -1
+    end_line: int = -1
+    is_method: bool = False
+    class_name: Optional[str] = None
+    class_description: Optional[str] = None
+    decorators: list[str] = field(default_factory=list)
+    modifiers: list[str] = field(default_factory=list)
+    visibility: Optional[str] = None
+    has_body: bool = True
+    is_constructor: bool = False

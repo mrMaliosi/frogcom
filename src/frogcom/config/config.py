@@ -44,7 +44,7 @@ class LLMConfig:
     temperature: float = 0.7
     top_p: float = 0.9
     stop: Optional[list[str]] = None
-    seed: Optional[int] = None
+    seed: Optional[int] = 1234
     
     def to_dict(self) -> Dict[str, Any]:
         """Преобразует конфигурацию в словарь для vLLM."""
@@ -119,6 +119,8 @@ class AppConfig:
                 max_tokens=int(os.getenv("MAX_TOKENS", "4096")),
                 temperature=float(os.getenv("TEMPERATURE", "0.4")),
                 top_p=float(os.getenv("TOP_P", "0.9")),
+                stop=os.getenv("STOP", None),
+                seed=int(os.getenv("SEED", "1234")),
             ),
             secondary_llm=LLMConfig(
                 model_name=os.getenv("LLM_MODEL_SECONDARY", "Qwen/Qwen3-4B-Instruct-2507"),
@@ -128,6 +130,8 @@ class AppConfig:
                 max_tokens=int(os.getenv("MAX_TOKENS_SECONDARY", "4096")),
                 temperature=float(os.getenv("TEMPERATURE_SECONDARY", "0.4")),
                 top_p=float(os.getenv("TOP_P_SECONDARY", "0.9")),
+                stop=os.getenv("STOP", None),
+                seed=int(os.getenv("SEED", "1234")),
             ),
             api=APIConfig(
                 host=os.getenv("API_HOST", "0.0.0.0"),

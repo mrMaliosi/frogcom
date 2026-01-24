@@ -10,7 +10,7 @@
 """
 
 from typing import List, Optional
-
+from datetime import datetime
 from frogcom.config.config import OrchestrationConfig
 from frogcom.internal.services.llm_service import LLMService
 from frogcom.internal.services.tracing_service import TracingService
@@ -89,13 +89,13 @@ class OrchestratorService:
         top_p: Optional[float] = None,
         stop: Optional[List[str]] = None,
         seed: Optional[int] = None,
-        request_id: Optional[str] = None,
     ) -> str:
         """
         Запускает генерацию с участием двух моделей согласно конфигурации.
         Возвращает финальный ответ первой модели.
         """
         # Начинаем трассировку
+        request_id : str = str(datetime.now().timestamp())
         trace_id = self.tracing.start_trace(user_prompt, request_id)
         print(user_prompt)
 
@@ -106,9 +106,6 @@ class OrchestratorService:
             "stop": stop,
             "seed": seed
         }
-        
-        retry_count : int = 0
-        max_retries : int = 3
 
         # 1. Первичный ответ (Primary)
         primary_answer = self._generate_with_retry(
