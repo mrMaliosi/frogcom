@@ -90,6 +90,13 @@ class APIConfig:
     max_request_size: int = 10 * 1024 * 1024  # 10MB максимальный размер запроса
     api_key: Optional[str] = None  # API ключ для аутентификации (опционально)
 
+@dataclass
+class SolverConfig:
+    """Конфигурация режима обработки запросов."""
+    
+    hard_defenition_of_parse: bool = False
+    enable_language_information: bool = False
+
 
 @dataclass
 class AppConfig:
@@ -143,11 +150,15 @@ class AppConfig:
                 api_key=os.getenv("API_KEY"),
             ),
             orchestration=OrchestrationConfig(
-                communication_rounds=int(os.getenv("COMMUNICATION_ROUNDS", "1")),
+                communication_rounds=int(os.getenv("COMMUNICATION_ROUNDS", "0")),
                 secondary_goal_prompt=os.getenv("SECONDARY_GOAL_PROMPT", (
                     "Задача: Ты — программист, которому необходимо понять что делает данная функция. Проанализируй предложенный комментарий и задай 3 вопроса. Верни только список вопросов.\n Входные данные:"
                 )),
                 enabled=os.getenv("ORCHESTRATION_ENABLED", "true").lower() == "true",
+            ),
+            solver=SolverConfig(
+                hard_defenition_of_parse=os.getenv("HARD_DEFENITION_OF_PARSE", "false").lower() == "true",
+                enable_language_information=os.getenv("ENABLE_LANGUAGE_INFORMATION", "false").lower() == "true",
             ),
         )
 

@@ -1,4 +1,12 @@
-# main.py
+# app.py
+from __future__ import annotations
+import signal
+import sys
+import os
+
+from typing import Dict
+from frogcom.internal.services.llm_service import LLMService
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from frogcom.config.config import config
 from frogcom.api.middleware.middleware import init_middleware
@@ -7,6 +15,14 @@ from frogcom.api.routes.health_routes import HealthRoutes
 from frogcom.api.routes.generate_routes import GenerateRoutes
 from frogcom.api.routes.llm_config_routes import LLMConfigRoutes
 from frogcom.api.routes.orchestration_routes import OrchestrationRoutes
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    # SHUTDOWN: Освобождаем ресурсы  
+    print(f"\n[INFO] Выгружаем LLM...")
+    for llm_name in app.state.llms:
+        app.state.llms[llm_name].shutdown()
 
 def register_routes(app: FastAPI) -> None:
     """Создаёт инстансы роутов и регистрирует их в приложении."""
@@ -46,8 +62,9 @@ def create_app() -> FastAPI:
         version=config.api.version,
         docs_url="/docs",
         redoc_url="/redoc",
+        lifespan=lifespan,
     )
-
+#
     orchestrator_ctx = LLMOrchestrator()
 
     # раздаём зависимости

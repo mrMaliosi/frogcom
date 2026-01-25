@@ -9,6 +9,8 @@ import threading
 import time
 from typing import List, Optional, Dict, Any
 from vllm import LLM, SamplingParams
+import gc
+import torch
 
 from frogcom.config.config import LLMConfig
 from frogcom.api.dto.models import LLMConfigRequest, LLMConfigResponse
@@ -22,6 +24,7 @@ class LLMService:
         self._config = initial_config
         self._llm: Optional[LLM] = None
         self._lock = threading.Lock()
+        self._shutdown_event = threading.Event()
         self._initialize_llm()
     
     def _initialize_llm(self) -> None:
@@ -35,6 +38,26 @@ class LLMService:
             self._llm = LLM(**self._config.to_dict())
         except Exception as e:
             raise RuntimeError(f"Не удалось инициализировать LLM: {e}")
+
+    def shutdown(self) -> None:
+        """Корректно завершает работу сервиса и освобождает ресурсы LLM."""
+        print("[INFO] Начинаем плавное завершение работы LLM сервиса...")
+        
+        with self._lock:
+            if self._llm is not None:
+                print("[INFO] Освобождаем LLM модель...")
+                
+                self._llm = None
+                gc.collect()
+                
+                # Очистка GPU памяти (если PyTorch)
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+                    torch.cuda.synchronize()
+                
+                print("[INFO] LLM модель выгружена из памяти")
+        
+        print("[INFO] LLM сервис завершен")
     
     def get_config(self) -> LLMConfigResponse:
         """Возвращает текущую конфигурацию LLM."""

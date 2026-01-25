@@ -129,8 +129,9 @@ class CommentRequest(BaseModel):
 
 @dataclass
 class FunctionDescription:
-    full_function_text: str
-    function_text: str
+    language: str
+    full_function_text: str = None
+    function_text: str = None
     docstring: Optional[str] = None
     full_function_lines_length: int = 0
     function_lines_length: int = 0

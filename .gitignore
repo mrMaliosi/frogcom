@@ -69,3 +69,5 @@ Thumbs.db
 
 #uv
 uv.lock
+
+run.sh

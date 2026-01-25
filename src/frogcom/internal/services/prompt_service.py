@@ -8,6 +8,7 @@ import ast
 import json
 from typing import Dict, Any, List, Optional
 
+from frogcom.config.config import config
 from frogcom.api.dto.models import Message
 from frogcom.api.dto.models import FunctionDescription
 
@@ -98,6 +99,19 @@ class PromptService:
     def extract_code(data: Dict[str, Any]) -> str:
         if "code" in data and data["code"]:
             return str(data["code"])
+        
+    @staticmethod
+    def task_creation(prompt_task : str, code : str, function_desc : FunctionDescription) -> str:
+        if config.solver.hard_defenition_of_parse == True and config.solver.enable_language_information == False:
+            prompt = f"{prompt_task}\n\nКод:\n{code}\n"
+        elif config.solver.hard_defenition_of_parse == False and config.solver.enable_language_information == True:
+            prompt = f"{prompt_task}\nЯзык кода: {function_desc.language}\n\n{code}\n"
+        elif config.solver.hard_defenition_of_parse == True and config.solver.enable_language_information == True:
+            prompt = f"{prompt_task}\nЯзык кода: {function_desc.language}\n\nКод:\n{code}\n"
+        else:
+            prompt = f"{prompt_task}\n{code}\n"
+
+        return prompt
         
     @staticmethod
     def extract_function_description(data: Dict[str, Any]) -> Optional['FunctionDescription']:
