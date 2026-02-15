@@ -37,7 +37,7 @@ curl -X POST "http://localhost:8888/generate" \
     "temperature": 0.7
   }'
 
-curl -X POST "http://localhost:8888/generate" \
+curl -X POST "http://localhost:8888/prompt-comment" \
   -H "Content-Type: application/json" \
   -d '{
     "prompt": "Создайте русскоязычную документацию для функции. Формат документации должен соответствовать стандартам языка программирования:\n- Python: Google-style Docstring.\n- Go: GoDoc.\n- Java: JavaDoc.\n- JavaScript: JSDoc.\n- C#: XML-документация.\n\nФункция:\n@Override\n    @Transactional\n    public OperatingSystemDTO editPartOfEntity(Integer operatingSystemId, OperatingSystemDTO operatingSystemDTO) {\n        var persistentOperatingSystem = getPersistentEntityById(operatingSystemId);\n        nullableMapper.map(operatingSystemDTO, persistentOperatingSystem);\n        operatingSystemRepository.save(persistentOperatingSystem);\n        return mapper.map(persistentOperatingSystem, OperatingSystemDTO.class);\n    }\n\nВыведите только готовый блок документации. Никаких пояснений, комментариев или дополнительного текста добавлять не нужно.",
@@ -51,6 +51,14 @@ curl -X PUT "http://localhost:8888/config/orchestration" \
   -d '{
     "communication_rounds": 2,
     "secondary_goal_prompt": "Найди неточности и предложи улучшения"
+  }'
+
+
+curl -X PUT "http://localhost:8888/config/solver" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "hard_definition_of_parse": false,
+    "enable_language_information": true
   }'
 ```
 

@@ -1,7 +1,7 @@
 from datetime import datetime
 from fastapi import Request, HTTPException
 from frogcom.api.routes.base import BaseRoutes
-from frogcom.api.dto.models import OrchestrationConfigResponse, OrchestrationConfigRequest
+from frogcom.api.dto.models import OrchestrationConfigResponse, OrchestrationConfigRequest, PutLogsRequest
 from frogcom.config.config import config
 
 class OrchestrationRoutes(BaseRoutes):
@@ -51,14 +51,24 @@ class OrchestrationRoutes(BaseRoutes):
                 config.orchestration.communication_rounds = body.communication_rounds
             if body.secondary_goal_prompt is not None:
                 config.orchestration.secondary_goal_prompt = body.secondary_goal_prompt
+            if body.enable_question_verification is not None:
+                config.orchestration.enable_question_verification = body.enable_question_verification
 
             updated = OrchestrationConfigResponse(
                 enabled=config.orchestration.enabled,
                 communication_rounds=config.orchestration.communication_rounds,
                 secondary_goal_prompt=config.orchestration.secondary_goal_prompt,
+                enable_question_verification=config.orchestration.enable_question_verification
             )
             self.logging_service.log_response({"orchestration_config_updated": updated.model_dump()})
             return updated
+        except Exception as e:
+            self.logging_service.log_error(e, {"body": body.model_dump()})
+            raise HTTPException(status_code=500,detail=f"Ошибка обновления конфигурации оркестрации: {str(e)}")
+        
+    async def place_string_in_logs(self, body: PutLogsRequest) -> None:
+        try:
+            self.logging_service.log_response({"orchestration_config_updated": body.model_dump()})
         except Exception as e:
             self.logging_service.log_error(e, {"body": body.model_dump()})
             raise HTTPException(status_code=500,detail=f"Ошибка обновления конфигурации оркестрации: {str(e)}")

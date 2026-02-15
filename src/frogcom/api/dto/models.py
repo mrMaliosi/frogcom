@@ -76,6 +76,22 @@ class LLMConfigResponse(BaseModel):
     seed: Optional[int] = Field(None, description="Сид")
     status: str = Field(..., description="Статус конфигурации")
 
+class SolverConfigRequest(BaseModel):
+    """Модель ответа с текущей конфигурацией солвера."""
+    
+    hard_definition_of_parse: bool= Field(..., description="")
+    enable_language_information: bool = Field(..., description="")
+
+class SolverConfigResponse(BaseModel):
+    """Модель ответа с текущей конфигурацией солвера."""
+    
+    hard_definition_of_parse: bool= Field(..., description="")
+    enable_language_information: bool = Field(..., description="")
+
+class PutLogsRequest(BaseModel):
+    """Модель запроса на отправку логов."""
+
+    logs: str = Field(..., description="Логи")
 
 class ErrorResponse(BaseModel):
     """Модель ответа с ошибкой."""
@@ -104,6 +120,9 @@ class OrchestrationConfigRequest(BaseModel):
     secondary_goal_prompt: Optional[str] = Field(
         None, description="Целевой промпт второй модели"
     )
+    enable_question_verification: Optional[bool] = Field(
+        None, description="Включить проверку вопросов"
+    )
 
 
 class OrchestrationConfigResponse(BaseModel):
@@ -112,6 +131,7 @@ class OrchestrationConfigResponse(BaseModel):
     enabled: bool = Field(..., description="Оркестрация включена")
     communication_rounds: int = Field(..., description="Количество раундов")
     secondary_goal_prompt: str = Field(..., description="Целевой промпт второй модели")
+    enable_question_verification: bool = Field(..., description="Проверка вопросов включена")
 
 
 class CommentResponse(BaseModel):
@@ -123,6 +143,7 @@ class CommentResponse(BaseModel):
 class CommentRequest(BaseModel):
     """Модель запроса для создания комментариев к списку функций."""
 
+    full_prompt: str = Field(..., description="Прямой промпт для генерации")
     task: str = Field(..., description="Задача к функции")
     code: str = Field(..., description="Сама функций")
     function: str = Field(..., description="Распаршенная функция")

@@ -16,18 +16,24 @@ class LoggingConfig:
     """Конфигурация системы логирования."""
     
     log_dir: str = "logs"
-    log_file: str = "requests.log"
+    requests_file: str = "requests.log"
+    verificator_file: str = "verificator.log"
     trace_file: str = "orchestration_trace.log"
     max_log_size_mb: int = 100
     log_ttl_days: int = 7
     
     @property
-    def log_file_path(self) -> Path:
+    def get_verificator_file_path(self) -> Path:
         """Полный путь к файлу логов."""
-        return Path(self.log_dir) / self.log_file
+        return Path(self.log_dir) / self.verificator_file
     
     @property
-    def trace_file_path(self) -> Path:
+    def get_requests_file_path(self) -> Path:
+        """Полный путь к файлу логов."""
+        return Path(self.log_dir) / self.requests_file
+    
+    @property
+    def get_trace_file_path(self) -> Path:
         """Полный путь к файлу трассировки оркестрации."""
         return Path(self.log_dir) / self.trace_file
 
@@ -48,13 +54,24 @@ class LLMConfig:
     
     def to_dict(self) -> Dict[str, Any]:
         """Преобразует конфигурацию в словарь для vLLM."""
-        config = {
+        return {
             "model": self.model_name,
             "gpu_memory_utilization": self.gpu_memory_utilization,
             "max_model_len": self.max_model_len,
             "disable_log_stats": self.disable_log_stats,
+            "max_num_batched_tokens": 8192,
+            "max_num_seqs": 2,
+            "enforce_eager": False,
         }
-        return config
+    
+    def get_gen_config(self) -> Dict[str, Any]:
+        return {
+            "max_tokens": self.max_tokens,
+            "temperature": self.temperature,
+            "top_p": self.top_p,
+            "stop": self.stop,
+            "seed": self.seed
+        } 
 
 
 @dataclass
@@ -71,6 +88,7 @@ class OrchestrationConfig:
         "- Какова максимальная длина текстового запроса в текущей реализации?"
     )
     enabled: bool = True
+    enable_question_verification: bool = False
 
 
 @dataclass
@@ -94,8 +112,9 @@ class APIConfig:
 class SolverConfig:
     """Конфигурация режима обработки запросов."""
     
-    hard_defenition_of_parse: bool = False
+    hard_definition_of_parse: bool = False
     enable_language_information: bool = False
+    generator_work_type: str = "standart"
 
 
 @dataclass
@@ -107,6 +126,7 @@ class AppConfig:
     secondary_llm: LLMConfig = field(default_factory=LLMConfig)
     api: APIConfig = field(default_factory=APIConfig)
     orchestration: OrchestrationConfig = field(default_factory=OrchestrationConfig)
+    solver: SolverConfig = field(default_factory=SolverConfig)
     
     @classmethod
     def from_env(cls) -> "AppConfig":
@@ -115,30 +135,31 @@ class AppConfig:
             logging=LoggingConfig(
                 log_dir=os.getenv("LOG_DIR", "logs"),
                 log_file=os.getenv("LOG_FILE", "requests.log"),
+                verificator_file=os.getenv("TRACE_FILE", "verificator_file.log"),
                 max_log_size_mb=int(os.getenv("MAX_LOG_SIZE_MB", "100")),
                 log_ttl_days=int(os.getenv("LOG_TTL_DAYS", "7")),
             ),
             llm=LLMConfig(
                 model_name=os.getenv("LLM_MODEL", "Qwen/Qwen3-4B-Instruct-2507"),
-                gpu_memory_utilization=float(os.getenv("GPU_MEMORY_UTILIZATION", "0.85")),
+                gpu_memory_utilization=float(os.getenv("GPU_MEMORY_UTILIZATION", "0.6")),
                 max_model_len=int(os.getenv("MAX_MODEL_LEN", "4096")),
                 disable_log_stats=os.getenv("DISABLE_LOG_STATS", "false").lower() == "true",
-                max_tokens=int(os.getenv("MAX_TOKENS", "4096")),
+                max_tokens=int(os.getenv("MAX_TOKENS", "1024")),
                 temperature=float(os.getenv("TEMPERATURE", "0.4")),
                 top_p=float(os.getenv("TOP_P", "0.9")),
                 stop=os.getenv("STOP", None),
                 seed=int(os.getenv("SEED", "1234")),
             ),
             secondary_llm=LLMConfig(
-                model_name=os.getenv("LLM_MODEL_SECONDARY", "Qwen/Qwen3-4B-Instruct-2507"),
-                gpu_memory_utilization=float(os.getenv("GPU_MEMORY_UTILIZATION_SECONDARY", "0.85")),
+                model_name=os.getenv("LLM_MODEL_SECONDARY", "bond005/meno-tiny-0.1"),
+                gpu_memory_utilization=float(os.getenv("GPU_MEMORY_UTILIZATION_SECONDARY", "0.3")),
                 max_model_len=int(os.getenv("MAX_MODEL_LEN", "4096")),
                 disable_log_stats=os.getenv("DISABLE_LOG_STATS_SECONDARY", "false").lower() == "true",
-                max_tokens=int(os.getenv("MAX_TOKENS_SECONDARY", "4096")),
+                max_tokens=int(os.getenv("MAX_TOKENS_SECONDARY", "1024")),
                 temperature=float(os.getenv("TEMPERATURE_SECONDARY", "0.4")),
                 top_p=float(os.getenv("TOP_P_SECONDARY", "0.9")),
-                stop=os.getenv("STOP", None),
-                seed=int(os.getenv("SEED", "1234")),
+                stop=os.getenv("STOP", ["•"]),
+                seed=int(os.getenv("SEED", "32768")),
             ),
             api=APIConfig(
                 host=os.getenv("API_HOST", "0.0.0.0"),
@@ -150,15 +171,17 @@ class AppConfig:
                 api_key=os.getenv("API_KEY"),
             ),
             orchestration=OrchestrationConfig(
-                communication_rounds=int(os.getenv("COMMUNICATION_ROUNDS", "0")),
+                communication_rounds=int(os.getenv("COMMUNICATION_ROUNDS", "1")),
                 secondary_goal_prompt=os.getenv("SECONDARY_GOAL_PROMPT", (
-                    "Задача: Ты — программист, которому необходимо понять что делает данная функция. Проанализируй предложенный комментарий и задай 3 вопроса. Верни только список вопросов.\n Входные данные:"
+                    "Задача: Ты — программист.Проанализируй комментарий к функции и задай вопросы, чтобы лучше понять её логику. Верни ТОЛЬКО нумерованный список вопросов. В конце списка вопросов напиши \"•\"\n\n"
                 )),
                 enabled=os.getenv("ORCHESTRATION_ENABLED", "true").lower() == "true",
+                enable_question_verification=os.getenv("ENABLE_QUESTION_VERIFICATION", "false").lower() == "true",
             ),
             solver=SolverConfig(
-                hard_defenition_of_parse=os.getenv("HARD_DEFENITION_OF_PARSE", "false").lower() == "true",
+                hard_definition_of_parse=os.getenv("hard_definition_of_parse", "false").lower() == "true",
                 enable_language_information=os.getenv("ENABLE_LANGUAGE_INFORMATION", "false").lower() == "true",
+                generator_work_type=os.getenv("GENERATOR_WORK_TYPE", "standart"),
             ),
         )
 

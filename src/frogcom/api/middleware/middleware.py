@@ -215,13 +215,15 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
             })
             
             # Возвращаем стандартизированный ответ об ошибке
+            content={
+                "error": "Internal server error",
+                "type": type(e).__name__,
+                "message": str(e) if hasattr(e, '__str__') else "Unknown error"
+            }
+            print(str(content))
             return JSONResponse(
                 status_code=500,
-                content={
-                    "error": "Internal server error",
-                    "type": type(e).__name__,
-                    "message": str(e) if hasattr(e, '__str__') else "Unknown error"
-                }
+                content=content
             )
 
 

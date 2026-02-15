@@ -37,4 +37,5 @@ class LLMOrchestrator:
             secondary=self.llms["secondary"],
             orchestration_config=config.orchestration,
             tracing_service=self.tracing_service,
+            logging_service=self.logging_service,
         )

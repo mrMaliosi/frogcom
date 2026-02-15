@@ -32,7 +32,6 @@ class LLMService:
         if self._llm is not None:
             # Освобождаем ресурсы предыдущей модели
             del self._llm
-            time.sleep(8)
         
         try:
             self._llm = LLM(**self._config.to_dict())
@@ -72,6 +71,9 @@ class LLMService:
             seed=self._config.seed,
             status="loaded" if self._llm is not None else "not_loaded"
         )
+    
+    def get_gen_conf(self) -> Dict[str, Any]:
+        return self._config.get_gen_config()
     
     def update_config(self, config_request: LLMConfigRequest) -> LLMConfigResponse:
         """Обновляет конфигурацию LLM."""

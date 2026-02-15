@@ -91,6 +91,11 @@ class PromptService:
         return True
     
     @staticmethod
+    def extract_full_prompt_task(data: Dict[str, Any]) -> str:
+        if "full_prompt" in data and data["full_prompt"]:
+            return str(data["full_prompt"])
+
+    @staticmethod
     def extract_prompt_task(data: Dict[str, Any]) -> str:
         if "task" in data and data["task"]:
             return str(data["task"])
@@ -101,15 +106,18 @@ class PromptService:
             return str(data["code"])
         
     @staticmethod
-    def task_creation(prompt_task : str, code : str, function_desc : FunctionDescription) -> str:
-        if config.solver.hard_defenition_of_parse == True and config.solver.enable_language_information == False:
+    def task_creation(full_prompt_text : str, prompt_task : str, code : str, function_desc : FunctionDescription) -> str:
+        if code == "" or function_desc is None or function_desc.language is None:
+            return full_prompt_text
+
+        if config.solver.hard_definition_of_parse == True and config.solver.enable_language_information == False:
             prompt = f"{prompt_task}\n\nКод:\n{code}\n"
-        elif config.solver.hard_defenition_of_parse == False and config.solver.enable_language_information == True:
+        elif config.solver.hard_definition_of_parse == False and config.solver.enable_language_information == True:
             prompt = f"{prompt_task}\nЯзык кода: {function_desc.language}\n\n{code}\n"
-        elif config.solver.hard_defenition_of_parse == True and config.solver.enable_language_information == True:
+        elif config.solver.hard_definition_of_parse == True and config.solver.enable_language_information == True:
             prompt = f"{prompt_task}\nЯзык кода: {function_desc.language}\n\nКод:\n{code}\n"
         else:
-            prompt = f"{prompt_task}\n{code}\n"
+            prompt = f"{full_prompt_text}\n"
 
         return prompt
         
