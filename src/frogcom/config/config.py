@@ -19,23 +19,21 @@ class LoggingConfig:
     requests_file: str = "requests.log"
     verificator_file: str = "verificator.log"
     trace_file: str = "orchestration_trace.log"
-    max_log_size_mb: int = 100
-    log_ttl_days: int = 7
     
     @property
     def get_verificator_file_path(self) -> Path:
         """Полный путь к файлу логов."""
-        return Path(self.log_dir) / self.verificator_file
+        return Path(self.log_dir, self.verificator_file)
     
     @property
     def get_requests_file_path(self) -> Path:
         """Полный путь к файлу логов."""
-        return Path(self.log_dir) / self.requests_file
+        return Path(self.log_dir, self.requests_file)
     
     @property
     def get_trace_file_path(self) -> Path:
         """Полный путь к файлу трассировки оркестрации."""
-        return Path(self.log_dir) / self.trace_file
+        return Path(self.log_dir, self.trace_file)
 
 
 @dataclass
@@ -62,6 +60,7 @@ class LLMConfig:
             "max_num_batched_tokens": 8192,
             "max_num_seqs": 2,
             "enforce_eager": False,
+            "seed": self.seed
         }
     
     def get_gen_config(self) -> Dict[str, Any]:
@@ -88,7 +87,9 @@ class OrchestrationConfig:
         "- Какова максимальная длина текстового запроса в текущей реализации?"
     )
     enabled: bool = True
+    enable_code_verification: bool = False
     enable_question_verification: bool = False
+    enable_only_one_model: bool = False
 
 
 @dataclass
@@ -134,10 +135,6 @@ class AppConfig:
         return cls(
             logging=LoggingConfig(
                 log_dir=os.getenv("LOG_DIR", "logs"),
-                log_file=os.getenv("LOG_FILE", "requests.log"),
-                verificator_file=os.getenv("TRACE_FILE", "verificator_file.log"),
-                max_log_size_mb=int(os.getenv("MAX_LOG_SIZE_MB", "100")),
-                log_ttl_days=int(os.getenv("LOG_TTL_DAYS", "7")),
             ),
             llm=LLMConfig(
                 model_name=os.getenv("LLM_MODEL", "Qwen/Qwen3-4B-Instruct-2507"),
@@ -147,7 +144,7 @@ class AppConfig:
                 max_tokens=int(os.getenv("MAX_TOKENS", "1024")),
                 temperature=float(os.getenv("TEMPERATURE", "0.4")),
                 top_p=float(os.getenv("TOP_P", "0.9")),
-                stop=os.getenv("STOP", None),
+                stop=os.getenv("STOP", ["•"]),
                 seed=int(os.getenv("SEED", "1234")),
             ),
             secondary_llm=LLMConfig(
@@ -159,7 +156,7 @@ class AppConfig:
                 temperature=float(os.getenv("TEMPERATURE_SECONDARY", "0.4")),
                 top_p=float(os.getenv("TOP_P_SECONDARY", "0.9")),
                 stop=os.getenv("STOP", ["•"]),
-                seed=int(os.getenv("SEED", "32768")),
+                seed=int(os.getenv("SEED", "32767")),
             ),
             api=APIConfig(
                 host=os.getenv("API_HOST", "0.0.0.0"),
@@ -176,7 +173,9 @@ class AppConfig:
                     "Задача: Ты — программист.Проанализируй комментарий к функции и задай вопросы, чтобы лучше понять её логику. Верни ТОЛЬКО нумерованный список вопросов. В конце списка вопросов напиши \"•\"\n\n"
                 )),
                 enabled=os.getenv("ORCHESTRATION_ENABLED", "true").lower() == "true",
+                enable_code_verification=os.getenv("ENABLE_QUESTION_VERIFICATION", "false").lower() == "true",
                 enable_question_verification=os.getenv("ENABLE_QUESTION_VERIFICATION", "false").lower() == "true",
+                enable_only_one_model=os.getenv("ENABLE_ONLY_ONE_MODEL", "true").lower() == "true",
             ),
             solver=SolverConfig(
                 hard_definition_of_parse=os.getenv("hard_definition_of_parse", "false").lower() == "true",

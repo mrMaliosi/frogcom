@@ -35,7 +35,7 @@ class OrchestratorService:
 
     def _verify_response(self, content: str, task_type: str, expected_questions: int = 0) -> VerificationResult:
         """Обертка над верификатором."""
-        if task_type == "comment":
+        if task_type == "comment" and self.config.enable_code_verification is True:
             return self.verifier.verify_comment(content)
         elif task_type == "questions" and self.config.enable_question_verification is True:
             return self.verifier.verify_questions_list(content, expected_questions)
@@ -65,6 +65,7 @@ class OrchestratorService:
         
         for retry in range(max_retries):
             responses = model.generate_text(prompts=prompts, **kwargs)
+
             current_response = responses[0] if responses else ""
             verification = self._verify_response(current_response, task_type, expected_questions)
             
@@ -111,7 +112,7 @@ class OrchestratorService:
         Возвращает финальный ответ первой модели.
         """
         # Начинаем трассировку
-        trace_id = self.logging_service.start_trace(followup_prompt, request_id)
+        trace_id = self.logging_service.start_trace(user_prompt, request_id)
         primary_gen_params = self.primary.get_gen_conf()
         secondary_gen_params = config.secondary_llm.get_gen_config()
 

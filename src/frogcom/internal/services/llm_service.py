@@ -83,6 +83,8 @@ class LLMService:
                 self._config.model_name = config_request.model_name
             if config_request.gpu_memory_utilization is not None:
                 self._config.gpu_memory_utilization = config_request.gpu_memory_utilization
+            if config_request.max_model_len is not None:
+                self._config.max_model_len = config_request.max_model_len
             if config_request.disable_log_stats is not None:
                 self._config.disable_log_stats = config_request.disable_log_stats
             if config_request.max_tokens is not None:
@@ -102,6 +104,7 @@ class LLMService:
             critical_params_changed = (
                 config_request.model_name is not None or
                 config_request.gpu_memory_utilization is not None or
+                config_request.max_model_len is not None or
                 config_request.disable_log_stats is not None
             )
             

@@ -55,6 +55,7 @@ class LLMConfigRequest(BaseModel):
     gpu_memory_utilization: Optional[float] = Field(
         None, ge=0.1, le=1.0, description="Использование GPU памяти"
     )
+    max_model_len: Optional[int] = Field(None, description="Максимальная длина модели")
     disable_log_stats: Optional[bool] = Field(None, description="Отключить статистику логов")
     max_tokens: Optional[int] = Field(None, ge=1, le=4096, description="Максимальное количество токенов")
     temperature: Optional[float] = Field(None, ge=0.0, le=2.0, description="Температура")
@@ -93,6 +94,11 @@ class PutLogsRequest(BaseModel):
 
     logs: str = Field(..., description="Логи")
 
+class PutLogsResponse(BaseModel):
+    """Модель запроса на отправку логов."""
+
+    logs: str = Field(..., description="Логи")
+
 class ErrorResponse(BaseModel):
     """Модель ответа с ошибкой."""
     
@@ -122,6 +128,12 @@ class OrchestrationConfigRequest(BaseModel):
     )
     enable_question_verification: Optional[bool] = Field(
         None, description="Включить проверку вопросов"
+    )
+    enable_code_verification: Optional[bool] = Field(
+        None, description="Включить проверку кода"
+    )
+    enable_only_one_model: Optional[bool] = Field(
+        None, description="Включить только одну модель"
     )
 
 

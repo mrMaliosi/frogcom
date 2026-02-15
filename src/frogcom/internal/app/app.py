@@ -70,7 +70,6 @@ def create_app() -> FastAPI:
     # раздаём зависимости
     app.state.llms = orchestrator_ctx.llms
     app.state.logging_service = orchestrator_ctx.logging_service
-    app.state.tracing_service = orchestrator_ctx.tracing_service
     app.state.orchestrator = orchestrator_ctx.orchestrator
 
     init_middleware(app, app.state.logging_service)

@@ -26,9 +26,10 @@ class LoggingService:
     def __init__(self, config: LoggingConfig):
         """Инициализация сервиса логирования."""
         self.config = config
-        self.request_file_path = config.get_requests_file_path()
-        self.tracing_file_path = config.get_trace_file_path()
-        self.verificator_file_path = config.get_verificator_file_path()
+        self.log_dir_path = Path(config.log_dir)
+        self.request_file_path = config.get_requests_file_path
+        self.tracing_file_path = config.get_trace_file_path
+        self.verificator_file_path = config.get_verificator_file_path
         self._ensure_log_directory()
     
     def _ensure_log_directory(self) -> None:
@@ -106,7 +107,7 @@ class LoggingService:
     def log_verificator_result(self, data: Dict[str, Any] = None) -> None:
         self._log_data(data, "LOG", self.verificator_file_path)
 
-    def _write_data(data: Dict[str, Any], f: TextIO) -> None:
+    def _write_data(self, data: Dict[str, Any], f: TextIO) -> None:
         json_str = json.dumps(data, ensure_ascii=False, indent=2)
         f.write(json_str.replace("\\n", "\n"))
 
@@ -120,7 +121,7 @@ class LoggingService:
 
     def _write_trace_entry(self, trace_data: Dict[str, Any]) -> None:
         """Записывает новую запись трассировки."""      
-        with open(self.config.trace_file_path, "a", encoding="utf-8") as f:
+        with open(self.tracing_file_path, "a", encoding="utf-8") as f:
             f.write(f"\n{'='*80}\n")
             f.write(f"TRACE START: {trace_data['trace_id']}\n")
             f.write(f"{'='*80}\n")
@@ -129,7 +130,7 @@ class LoggingService:
 
     def _append_to_trace(self, step_data: Dict[str, Any]) -> None:
         """Добавляет шаг к существующей трассировке."""
-        with open(self.config.trace_file_path, "a", encoding="utf-8") as f:
+        with open(self.tracing_file_path, "a", encoding="utf-8") as f:
             f.write(f"\n--- STEP {step_data.get('step', 'unknown')} ---\n")
             self._write_data(step_data, f)
             f.flush()
