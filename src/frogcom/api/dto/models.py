@@ -135,6 +135,9 @@ class OrchestrationConfigRequest(BaseModel):
     enable_only_one_model: Optional[bool] = Field(
         None, description="Включить только одну модель"
     )
+    generator_work_type: Optional[str] = Field(
+        None, description="Тип работы генератора"
+    )
 
 
 class OrchestrationConfigResponse(BaseModel):

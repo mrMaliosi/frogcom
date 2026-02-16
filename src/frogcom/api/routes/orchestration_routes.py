@@ -66,6 +66,8 @@ class OrchestrationRoutes(BaseRoutes):
                 config.orchestration.enable_question_verification = body.enable_question_verification
             if body.enable_only_one_model is not None:
                 config.orchestration.enable_only_one_model = body.enable_only_one_model
+            if body.generator_work_type is not None:
+                config.orchestration.generator_work_type = body.generator_work_type
 
             updated = OrchestrationConfigResponse(
                 enabled=config.orchestration.enabled,

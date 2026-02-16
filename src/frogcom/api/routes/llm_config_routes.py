@@ -67,11 +67,8 @@ class LLMConfigRoutes(BaseRoutes):
     ) -> LLMConfigResponse:
         """Обновляет конфигурацию выбранной LLM."""
         try:
-            print(llm_id)
             svc = self._get_llm_by_id(llm_id, request)
-            print(svc)
             updated_config = svc.update_config(config_request)
-            print("updated")
             self.logging_service.log_response(
                 {
                     "event": "llm_config_updated",

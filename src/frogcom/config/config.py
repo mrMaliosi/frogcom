@@ -58,7 +58,7 @@ class LLMConfig:
             "max_model_len": self.max_model_len,
             "disable_log_stats": self.disable_log_stats,
             "max_num_batched_tokens": 8192,
-            "max_num_seqs": 2,
+            "max_num_seqs": 4,
             "enforce_eager": False,
             "seed": self.seed
         }
@@ -90,6 +90,7 @@ class OrchestrationConfig:
     enable_code_verification: bool = False
     enable_question_verification: bool = False
     enable_only_one_model: bool = False
+    generator_work_type: str = "standart"
 
 
 @dataclass
@@ -115,7 +116,6 @@ class SolverConfig:
     
     hard_definition_of_parse: bool = False
     enable_language_information: bool = False
-    generator_work_type: str = "standart"
 
 
 @dataclass
@@ -176,11 +176,11 @@ class AppConfig:
                 enable_code_verification=os.getenv("ENABLE_QUESTION_VERIFICATION", "false").lower() == "true",
                 enable_question_verification=os.getenv("ENABLE_QUESTION_VERIFICATION", "false").lower() == "true",
                 enable_only_one_model=os.getenv("ENABLE_ONLY_ONE_MODEL", "true").lower() == "true",
+                generator_work_type=os.getenv("GENERATOR_WORK_TYPE", "standart"),
             ),
             solver=SolverConfig(
                 hard_definition_of_parse=os.getenv("hard_definition_of_parse", "false").lower() == "true",
                 enable_language_information=os.getenv("ENABLE_LANGUAGE_INFORMATION", "false").lower() == "true",
-                generator_work_type=os.getenv("GENERATOR_WORK_TYPE", "standart"),
             ),
         )
 

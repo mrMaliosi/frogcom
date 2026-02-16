@@ -219,7 +219,7 @@ class OrchestratorService:
             seed: Optional[int] = None,
             request_id : str = str(datetime.now().timestamp())
         ) -> str:
-            if config.solver.generator_work_type == "question":
+            if config.orchestration.generator_work_type == "question":
                 return self.generate_with_questions_first(
                     user_prompt=user_prompt,
                     max_tokens=max_tokens,

@@ -72,40 +72,7 @@ class GenerateRoutes(BaseRoutes):
             # Create prompt
             task = self.prompt_service.task_creation(full_prompt_text, prompt_task, code, function_desc)
 
-            answer = self.orchestrator.generate_with_orchestration(
-                user_prompt=task,
-                max_tokens=self.llm_service_primary.get_config().max_tokens,
-                temperature=self.llm_service_primary.get_config().temperature,
-                top_p=self.llm_service_primary.get_config().top_p,
-                stop=[],
-                seed=self.llm_service_primary.get_config().seed,
-            )
-
-            response = CommentResponse(
-                comment=answer
-            )
-
-            self.logging_service.log_response({"response": response.model_dump()})
-            return response
-        except Exception as e:
-            self.logging_service.log_error(e, {"request": data})
-            raise HTTPException(status_code=500, detail=f"Ошибка генерации: {str(e)}")
-        
-    async def prompt_comment(self, request: Request, req: GenerateRequest) -> GenerateResponse:
-        """
-        Генерирует комментарий на основе предобработанного запроса.
-        """
-        try:
-            data = req.model_dump()
-            full_prompt_text : str = self.prompt_service.extract_full_prompt_task(data)
-            prompt_task : str = self.prompt_service.extract_prompt_task(data)
-            code : str = self.prompt_service.extract_code(data)
-            function_desc : FunctionDescription = self.prompt_service.extract_function_description(data)
-
-            # Create prompt
-            task = self.prompt_service.task_creation(full_prompt_text, prompt_task, code, function_desc)
-
-            answer = self.orchestrator.generate_with_orchestration(
+            answer = self.orchestrator.generate_comment(
                 user_prompt=task,
                 max_tokens=self.llm_service_primary.get_config().max_tokens,
                 temperature=self.llm_service_primary.get_config().temperature,
@@ -204,7 +171,7 @@ class GenerateRoutes(BaseRoutes):
                 raise HTTPException(status_code=400, detail="Не предоставлен промпт")
 
             request_id : str = str(datetime.now().timestamp())
-            answer = self.orchestrator.generate_with_orchestration(
+            answer = self.orchestrator.generate_comment(
                 user_prompt=prompt,
                 max_tokens=self.llm_service_primary.get_config().max_tokens,
                 temperature=req.temperature,
