@@ -62,11 +62,19 @@ class OrchestratorService:
     ) -> str:
         """Универсальный метод генерации с повторными попытками."""
         last_response = ""
-        
+
+        empty_reponse_retryes: int = 0
         for retry in range(max_retries):
             responses = model.generate_text(prompts=prompts, **kwargs)
 
             current_response = responses[0] if responses else ""
+            if len(current_response) < 40:
+                last_response = current_response
+                retry -= 1
+                empty_reponse_retryes += 1
+                retry += empty_reponse_retryes // 20
+                continue
+
             verification = self._verify_response(current_response, task_type, expected_questions)
             
             if verification.is_valid:
@@ -157,7 +165,7 @@ class OrchestratorService:
                 task_type="comment",
                 **primary_gen_params
             )
-            self.logging_service.log_trace_step(trace_id, comment, "comment", round_num)
+            self.logging_service.log_trace_step(trace_id, comment, "after_comment", round_num)
         
         return comment
 
