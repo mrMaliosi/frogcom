@@ -9,18 +9,19 @@ from frogcom.internal.services.orchestrator_service import OrchestratorService
 class LLMOrchestrator:
     def __init__(self) -> None:
         primary_config = config.llm
-        print(primary_config.to_dict())
-        print(config.secondary_llm.to_dict())
-        primary_service = LLMService(primary_config)
-        print("[LOG]: First model ready!")
+        if config.orchestration.is_first_model_ollama is False:
+            print(primary_config.to_dict())
+            print(config.secondary_llm.to_dict())
+            primary_service = LLMService(primary_config)
+            print("[LOG]: First model ready!")
         
-
-        secondary_config = config.secondary_llm
-        if config.orchestration.enable_only_one_model:
-            secondary_service = primary_service
-        else:
-            secondary_service = LLMService(secondary_config)
-            print("[LOG]: Second model ready!")
+        if config.orchestration.is_second_model_ollama is False:
+            secondary_config = config.secondary_llm
+            if config.orchestration.enable_only_one_model:
+                secondary_service = primary_service
+            else:
+                secondary_service = LLMService(secondary_config)
+                print("[LOG]: Second model ready!")
 
 
         # формируем словарь сервисов по удобным ключам

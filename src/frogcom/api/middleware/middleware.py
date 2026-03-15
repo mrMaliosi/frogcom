@@ -147,7 +147,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """Middleware для ограничения скорости запросов."""
     
-    def __init__(self, app: ASGIApp, requests_per_minute: int = 60):
+    def __init__(self, app: ASGIApp, requests_per_minute: int = 5000):
         """Инициализация middleware."""
         super().__init__(app)
         self.requests_per_minute = requests_per_minute

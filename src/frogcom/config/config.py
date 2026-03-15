@@ -91,6 +91,8 @@ class OrchestrationConfig:
     enable_question_verification: bool = False
     enable_only_one_model: bool = False
     generator_work_type: str = "standart"
+    is_first_model_ollama: bool = False
+    is_second_model_ollama: bool = False
 
 
 @dataclass
@@ -105,7 +107,7 @@ class APIConfig:
     version: str = "0.2.0"
     
     # Middleware настройки
-    rate_limit: int = 60  # запросов в минуту
+    rate_limit: int = 5000  # запросов в минуту
     cors_origins: list[str] = field(default_factory=lambda: ["*"])  # CORS origins
     max_request_size: int = 10 * 1024 * 1024  # 10MB максимальный размер запроса
     api_key: Optional[str] = None  # API ключ для аутентификации (опционально)
@@ -137,15 +139,15 @@ class AppConfig:
                 log_dir=os.getenv("LOG_DIR", "logs"),
             ),
             llm=LLMConfig(
-                model_name=os.getenv("LLM_MODEL", "Qwen/Qwen3-4B-Instruct-2507"),
-                gpu_memory_utilization=float(os.getenv("GPU_MEMORY_UTILIZATION", "0.6")),
-                max_model_len=int(os.getenv("MAX_MODEL_LEN", "4096")),
+                model_name=os.getenv("LLM_MODEL", "Qwen/Qwen3-4B-Instruct-2507"),         #"Qwen/Qwen3-8B-FP8"
+                gpu_memory_utilization=float(os.getenv("GPU_MEMORY_UTILIZATION", "0.8")),
+                max_model_len=int(os.getenv("MAX_MODEL_LEN", "8192")),
                 disable_log_stats=os.getenv("DISABLE_LOG_STATS", "false").lower() == "true",
                 max_tokens=int(os.getenv("MAX_TOKENS", "1024")),
                 temperature=float(os.getenv("TEMPERATURE", "0.4")),
                 top_p=float(os.getenv("TOP_P", "0.9")),
-                stop=os.getenv("STOP", ["•"]),
-                seed=int(os.getenv("SEED", "1234")),
+                stop=os.getenv("STOP", []),
+                seed=int(os.getenv("SEED", "0")),
             ),
             secondary_llm=LLMConfig(
                 model_name=os.getenv("LLM_MODEL_SECONDARY", "bond005/meno-tiny-0.1"),
@@ -155,14 +157,14 @@ class AppConfig:
                 max_tokens=int(os.getenv("MAX_TOKENS_SECONDARY", "1024")),
                 temperature=float(os.getenv("TEMPERATURE_SECONDARY", "0.4")),
                 top_p=float(os.getenv("TOP_P_SECONDARY", "0.9")),
-                stop=os.getenv("STOP", ["•"]),
-                seed=int(os.getenv("SEED", "32767")),
+                stop=os.getenv("STOP", []),
+                seed=int(os.getenv("SEED", "0")),
             ),
             api=APIConfig(
                 host=os.getenv("API_HOST", "0.0.0.0"),
                 port=int(os.getenv("API_PORT", "8888")),
                 reload=os.getenv("API_RELOAD", "true").lower() == "true",
-                rate_limit=int(os.getenv("API_RATE_LIMIT", "500")),
+                rate_limit=int(os.getenv("API_RATE_LIMIT", "5000")),
                 cors_origins=os.getenv("API_CORS_ORIGINS", "*").split(","),
                 max_request_size=int(os.getenv("API_MAX_REQUEST_SIZE", str(10 * 1024 * 1024))),
                 api_key=os.getenv("API_KEY"),
@@ -170,13 +172,15 @@ class AppConfig:
             orchestration=OrchestrationConfig(
                 communication_rounds=int(os.getenv("COMMUNICATION_ROUNDS", "1")),
                 secondary_goal_prompt=os.getenv("SECONDARY_GOAL_PROMPT", (
-                    "Задача: Ты — программист.Проанализируй комментарий к функции и задай вопросы, чтобы лучше понять её логику. Верни ТОЛЬКО нумерованный список вопросов. В конце списка вопросов напиши \"•\"\n\n"
+                    "Задача: Ты — программист.Проанализируй комментарий к функции и задай вопросы, чтобы лучше понять её логику. Верни ТОЛЬКО нумерованный список вопросов.\n\n"    # В конце списка вопросов напиши \"•\"
                 )),
-                enabled=os.getenv("ORCHESTRATION_ENABLED", "true").lower() == "true",
-                enable_code_verification=os.getenv("ENABLE_QUESTION_VERIFICATION", "false").lower() == "true",
-                enable_question_verification=os.getenv("ENABLE_QUESTION_VERIFICATION", "false").lower() == "true",
+                enabled=os.getenv("ORCHESTRATION_ENABLED", "true").lower() == "false",
+                enable_code_verification=os.getenv("ENABLE_QUESTION_VERIFICATION", "false").lower() == "false",
+                enable_question_verification=os.getenv("ENABLE_QUESTION_VERIFICATION", "false").lower() == "false",
                 enable_only_one_model=os.getenv("ENABLE_ONLY_ONE_MODEL", "true").lower() == "true",
                 generator_work_type=os.getenv("GENERATOR_WORK_TYPE", "standart"),
+                is_first_model_ollama=os.getenv("IS_FIRST_MODEL_OLLAMA", "false").lower() == "true",
+                is_second_model_ollama=os.getenv("IS_SECOND_MODEL_OLLAMA", "false").lower() == "true",
             ),
             solver=SolverConfig(
                 hard_definition_of_parse=os.getenv("hard_definition_of_parse", "false").lower() == "true",

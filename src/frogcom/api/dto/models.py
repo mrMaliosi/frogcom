@@ -138,6 +138,12 @@ class OrchestrationConfigRequest(BaseModel):
     generator_work_type: Optional[str] = Field(
         None, description="Тип работы генератора"
     )
+    is_first_model_ollama: Optional[bool] = Field(
+        None, description="Первая модель Ollama"
+    )
+    is_second_model_ollama: Optional[bool] = Field(
+        None, description="Вторая модель Ollama"
+    )
 
 
 class OrchestrationConfigResponse(BaseModel):
