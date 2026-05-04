@@ -44,6 +44,12 @@ curl -X POST "http://localhost:8888/prompt-comment" \
     "max_tokens": 512
   }'
 
+curl -X PUT "http://localhost:8888/config/llm/primary" \
+  -H "Content-Type: application/json" \
+  -d "{ 
+      \"is_ollama\": \"True\"
+    }"
+
 
 # Настройка оркестрации
 curl -X PUT "http://localhost:8888/config/orchestration" \

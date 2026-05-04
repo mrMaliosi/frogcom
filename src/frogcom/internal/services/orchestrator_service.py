@@ -81,10 +81,6 @@ class OrchestratorService:
                 self.logging_service.log_verificator_result({"attempt": f"{retry + 1}/{max_retries}", "task_type": f"{task_type}", "content": f"{verification.content}", "is_valid": f"{verification.is_valid}"})
                 return verification.content
             
-            if not verification.needs_regeneration:
-                self.logging_service.log_verificator_result({"attempt": f"{retry + 1}/{max_retries}", "task_type": f"{task_type}", "content": f"{verification.content}", "is_valid": f"{verification.is_valid}"})
-                return current_response
-            
             last_response = current_response
 
         # Если исчерпали попытки, возвращаем последний ответ (даже если он не валиден)
@@ -128,7 +124,7 @@ class OrchestratorService:
         expected_questions: int = 0,
         max_retries: int = 3,
         **kwargs) -> str:
-        if config.orchestration.is_first_model_ollama is True:
+        if model._config.is_ollama is True:
             return self._generate_with_ollama(
                 prompts=prompts,
                 task_type=task_type,
@@ -165,7 +161,6 @@ class OrchestratorService:
         trace_id = self.logging_service.start_trace(user_prompt, request_id)
         primary_gen_params = self.primary.get_gen_conf()
         secondary_gen_params = config.secondary_llm.get_gen_config()
-
         # 1. Первичный ответ (Primary)
         first_comment: str = self._generate_answer(
             model=self.primary,
@@ -185,7 +180,7 @@ class OrchestratorService:
             # 2a. Вторая модель формирует уточнения (Secondary)
             secondary_prompt: str = (
                 f"{self.config.secondary_goal_prompt}"
-                f"Комментарий: {first_comment}\n"
+                f"{first_comment}\n"
             )
             questions: str = self._generate_answer(
                 model=self.secondary,
@@ -199,18 +194,19 @@ class OrchestratorService:
 
             # 2b. Первая модель отвечает на уточнения (Primary)
             followup_prompt = (
-                "Переработай черновой комментарий, чтобы он ПОЛНОСТЬЮ отвечал списку вопросов и техническому заданию. Напиши ТОЛЬКО обновлённый комментарий.\n\n" # В конце обновлённого комментария напиши \"•\"
+                "Скорректирй исходный комментарий, учитывая список вопросов.\n"
+                "\nНапиши ТОЛЬКО обновленный комментарий.\n"
                 f"Список вопросов: {questions}\n"
-                f"Техническое задание: {user_prompt}\n"
-                f"Черновой комментарий: {first_comment}\n"
+                f"Исходный комментарий: {first_comment}\n"
+                "Ничего кроме обновленного комментария писать НЕ нужно."
             )
             comment: str = self._generate_answer(
-                model=self.secondary,
+                model=self.primary,
                 prompts=[followup_prompt],
                 task_type="comment",
                 expected_questions=getattr(self.config, 'expected_questions_count', 3),
                 max_retries=3,
-                **secondary_gen_params
+                **primary_gen_params
             )
             self.logging_service.log_trace_step(trace_id, comment, "after_comment", round_num)
         return comment
@@ -229,8 +225,10 @@ class OrchestratorService:
         Запускает генерацию с участием двух моделей согласно конфигурации.
         Возвращает финальный ответ первой модели.
         """
+        # "Ты — эксперт по промпт-инжинирингу. Проанализируй данный промпт и составь список конкретных вопросов, на которые LLM должна ответить при его выполнении. Верни ТОЛЬКО нумерованный список вопросов.\n\n"   #В конце списка вопросов напиши \"•\"
+        #    f"Промпт: {user_prompt}\n"
         followup_prompt: str = (
-            "Ты — эксперт по промпт-инжинирингу. Проанализируй данный промпт и составь список конкретных вопросов, на которые LLM должна ответить при его выполнении. Верни ТОЛЬКО нумерованный список вопросов.\n\n"   #В конце списка вопросов напиши \"•\"
+            "Задай несколько (3-5) вопросов к коду.\nВопросы должны помочь улучшить комментарий, помогая понять поведение функции и проверять корректность комментария.\nКаждый вопрос с новой строки.\n\nИспользуй нумерацию:\n1. ...\n2. ...\nБез пояснений.\n\n"
             f"Промпт: {user_prompt}\n"
         )
         
@@ -252,6 +250,7 @@ class OrchestratorService:
             "Выполни задание, учитывая список вопросов.\n\n"        # Как только выполнишь задание - напиши \"•\"\n
             f"Вопросы: {questions}\n"
             f"Задание: {user_prompt}\n"
+            "Ничего кроме комментария в заданном формате писать НЕ нужно.\n"
         )
         answer: str = self._generate_with_retry(
             model=self.primary,

@@ -55,6 +55,7 @@ class LLMConfigRequest(BaseModel):
     gpu_memory_utilization: Optional[float] = Field(
         None, ge=0.1, le=1.0, description="Использование GPU памяти"
     )
+    is_ollama: Optional[bool] = Field(None, description="Использовать Ollama")
     max_model_len: Optional[int] = Field(None, description="Максимальная длина модели")
     disable_log_stats: Optional[bool] = Field(None, description="Отключить статистику логов")
     max_tokens: Optional[int] = Field(None, ge=1, le=4096, description="Максимальное количество токенов")
@@ -69,6 +70,8 @@ class LLMConfigResponse(BaseModel):
     
     model_name: str = Field(..., description="Текущее название модели")
     gpu_memory_utilization: float = Field(..., description="Использование GPU памяти")
+    is_ollama: bool = Field(..., description="Использование Ollama")
+    max_model_len: int = Field(..., description="Максимальная длина модели")
     disable_log_stats: bool = Field(..., description="Статистика логов отключена")
     max_tokens: int = Field(..., description="Максимальное количество токенов")
     temperature: float = Field(..., description="Температура")
@@ -137,12 +140,6 @@ class OrchestrationConfigRequest(BaseModel):
     )
     generator_work_type: Optional[str] = Field(
         None, description="Тип работы генератора"
-    )
-    is_first_model_ollama: Optional[bool] = Field(
-        None, description="Первая модель Ollama"
-    )
-    is_second_model_ollama: Optional[bool] = Field(
-        None, description="Вторая модель Ollama"
     )
 
 

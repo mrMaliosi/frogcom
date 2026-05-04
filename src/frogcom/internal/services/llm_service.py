@@ -14,7 +14,8 @@ import torch
 
 from frogcom.config.config import LLMConfig
 from frogcom.api.dto.models import LLMConfigRequest, LLMConfigResponse
-
+from openai import OpenAI
+import os
 
 class LLMService:
     """Сервис для работы с LLM моделями."""
@@ -25,18 +26,24 @@ class LLMService:
         self._llm: Optional[LLM] = None
         self._lock = threading.Lock()
         self._shutdown_event = threading.Event()
-        self._initialize_llm()
+        if initial_config.is_ollama is False and self._config.is_hosted is False:
+            self._initialize_llm()
+        else:
+            self._delete_llm()
     
     def _initialize_llm(self) -> None:
         """Инициализирует LLM модель."""
-        if self._llm is not None:
-            # Освобождаем ресурсы предыдущей модели
-            del self._llm
+        self._delete_llm()
         
-        try:
-            self._llm = LLM(**self._config.to_dict())
-        except Exception as e:
-            raise RuntimeError(f"Не удалось инициализировать LLM: {e}")
+        if self._config.is_ollama is False:
+            try:
+                self._llm = LLM(**self._config.to_dict())
+            except Exception as e:
+                raise RuntimeError(f"Не удалось инициализировать LLM: {e}")
+        
+    def _delete_llm(self) -> None:
+        if self._llm is not None:
+            del self._llm
 
     def shutdown(self) -> None:
         """Корректно завершает работу сервиса и освобождает ресурсы LLM."""
@@ -63,6 +70,8 @@ class LLMService:
         return LLMConfigResponse(
             model_name=self._config.model_name,
             gpu_memory_utilization=self._config.gpu_memory_utilization,
+            is_ollama=self._config.is_ollama,
+            max_model_len=self._config.max_model_len,
             disable_log_stats=self._config.disable_log_stats,
             max_tokens=self._config.max_tokens,
             temperature=self._config.temperature,
@@ -105,6 +114,7 @@ class LLMService:
                 config_request.model_name is not None or
                 config_request.gpu_memory_utilization is not None or
                 config_request.max_model_len is not None or
+                config_request.is_ollama is not None or
                 config_request.disable_log_stats is not None
             )
             
@@ -148,10 +158,7 @@ class LLMService:
             
         Raises:
             RuntimeError: Если LLM не инициализирован
-        """
-        if not self.is_loaded():
-            raise RuntimeError("LLM не инициализирован")
-        
+        """  
         # Используем параметры из запроса или из конфигурации
         sampling_params = SamplingParams(
             max_tokens=max_tokens or self._config.max_tokens,
@@ -161,7 +168,52 @@ class LLMService:
             seed=seed or self._config.seed,
         )
         
-        with self._lock:
-            outputs = self._llm.generate(prompts, sampling_params)
+
+        if self._config.is_hosted is True:
+            if self._config.model_name == "Qwen/Qwen3-4B-Instruct-2507":
+                results = []
+                with self._lock:
+                    client = OpenAI(
+                        base_url="http://localhost:8000/v1",
+                        api_key="EMPTY"
+                    )
+                    for prompt in prompts:
+                        response = client.chat.completions.create(
+                            model=self._config.model_name,
+                            messages=[
+                                {"role": "user", "content": prompt}
+                            ],
+                            max_tokens=sampling_params.max_tokens,
+                            temperature=sampling_params.temperature,
+                            top_p=sampling_params.top_p,
+                            stop=sampling_params.stop,
+                            seed=sampling_params.seed,
+                        )
+                        results.append(response.choices[0].message.content)
+            else:
+                results = []
+                with self._lock:
+                    client = OpenAI(
+                        base_url="http://localhost:8001/v1",
+                        api_key="EMPTY"
+                    )
+                    for prompt in prompts:
+                        response = client.chat.completions.create(
+                            model=self._config.model_name,
+                            messages=[
+                                {"role": "user", "content": prompt}
+                            ],
+                            max_tokens=sampling_params.max_tokens,
+                            temperature=sampling_params.temperature,
+                            top_p=sampling_params.top_p,
+                            stop=sampling_params.stop,
+                            seed=sampling_params.seed,
+                        )
+                        results.append(response.choices[0].message.content)
+
+            return results
+        else:
+            with self._lock:
+                outputs = self._llm.generate(prompts, sampling_params)
         
         return [output.outputs[0].text for output in outputs]

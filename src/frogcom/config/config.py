@@ -42,6 +42,8 @@ class LLMConfig:
     
     model_name: str = "facebook/opt-125m"
     gpu_memory_utilization: float = 0.5
+    is_ollama: bool = False
+    is_hosted: bool = False
     max_model_len: int = 4096
     disable_log_stats: bool = False
     max_tokens: int = 256
@@ -57,8 +59,8 @@ class LLMConfig:
             "gpu_memory_utilization": self.gpu_memory_utilization,
             "max_model_len": self.max_model_len,
             "disable_log_stats": self.disable_log_stats,
-            "max_num_batched_tokens": 8192,
-            "max_num_seqs": 4,
+            "max_num_batched_tokens": 1024,
+            "max_num_seqs": 2,
             "enforce_eager": False,
             "seed": self.seed
         }
@@ -91,8 +93,6 @@ class OrchestrationConfig:
     enable_question_verification: bool = False
     enable_only_one_model: bool = False
     generator_work_type: str = "standart"
-    is_first_model_ollama: bool = False
-    is_second_model_ollama: bool = False
 
 
 @dataclass
@@ -138,23 +138,29 @@ class AppConfig:
             logging=LoggingConfig(
                 log_dir=os.getenv("LOG_DIR", "logs"),
             ),
+            # "/home/maliosi/diploma/gitHub_crawler/datasetter/dpo_for_comments/merged_model"
             llm=LLMConfig(
                 model_name=os.getenv("LLM_MODEL", "Qwen/Qwen3-4B-Instruct-2507"),         #"Qwen/Qwen3-8B-FP8"
-                gpu_memory_utilization=float(os.getenv("GPU_MEMORY_UTILIZATION", "0.8")),
-                max_model_len=int(os.getenv("MAX_MODEL_LEN", "8192")),
+                gpu_memory_utilization=float(os.getenv("GPU_MEMORY_UTILIZATION", "0.6")),
+                is_ollama=os.getenv("IS_OLLAMA", "false").lower() == "true",
+                is_hosted=os.getenv("IS_HOSTED", "false").lower() == "true",
+                max_model_len=int(os.getenv("MAX_MODEL_LEN", "3096")),
                 disable_log_stats=os.getenv("DISABLE_LOG_STATS", "false").lower() == "true",
                 max_tokens=int(os.getenv("MAX_TOKENS", "1024")),
-                temperature=float(os.getenv("TEMPERATURE", "0.4")),
+                temperature=float(os.getenv("TEMPERATURE", "0.0")),
                 top_p=float(os.getenv("TOP_P", "0.9")),
                 stop=os.getenv("STOP", []),
                 seed=int(os.getenv("SEED", "0")),
             ),
+            # "/home/maliosi/diploma/gitHub_crawler/datasetter/merger/outputs/dpo/merged_meno_dpo"
             secondary_llm=LLMConfig(
                 model_name=os.getenv("LLM_MODEL_SECONDARY", "bond005/meno-tiny-0.1"),
                 gpu_memory_utilization=float(os.getenv("GPU_MEMORY_UTILIZATION_SECONDARY", "0.3")),
-                max_model_len=int(os.getenv("MAX_MODEL_LEN", "4096")),
+                is_ollama=os.getenv("IS_OLLAMA", "false").lower() == "true",
+                is_hosted=os.getenv("IS_HOSTED", "false").lower() == "true",
+                max_model_len=int(os.getenv("MAX_MODEL_LEN", "2500")),
                 disable_log_stats=os.getenv("DISABLE_LOG_STATS_SECONDARY", "false").lower() == "true",
-                max_tokens=int(os.getenv("MAX_TOKENS_SECONDARY", "1024")),
+                max_tokens=int(os.getenv("MAX_TOKENS_SECONDARY", "512")),
                 temperature=float(os.getenv("TEMPERATURE_SECONDARY", "0.4")),
                 top_p=float(os.getenv("TOP_P_SECONDARY", "0.9")),
                 stop=os.getenv("STOP", []),
@@ -172,15 +178,13 @@ class AppConfig:
             orchestration=OrchestrationConfig(
                 communication_rounds=int(os.getenv("COMMUNICATION_ROUNDS", "1")),
                 secondary_goal_prompt=os.getenv("SECONDARY_GOAL_PROMPT", (
-                    "Задача: Ты — программист.Проанализируй комментарий к функции и задай вопросы, чтобы лучше понять её логику. Верни ТОЛЬКО нумерованный список вопросов.\n\n"    # В конце списка вопросов напиши \"•\"
+                    "Задай несколько (3-5) вопросов к коду и комментарию.\nВопросы должны помочь улучшить комментарий, помогая понять поведение функции и проверять корректность комментария.\nКаждый вопрос с новой строки.\n\nИспользуй нумерацию:\n1. ...\n2. ...\nБез пояснений.\n\n"   # В конце списка вопросов напиши \"•\"
                 )),
-                enabled=os.getenv("ORCHESTRATION_ENABLED", "true").lower() == "false",
+                enabled=os.getenv("ORCHESTRATION_ENABLED", "true").lower() == "true",
                 enable_code_verification=os.getenv("ENABLE_QUESTION_VERIFICATION", "false").lower() == "false",
                 enable_question_verification=os.getenv("ENABLE_QUESTION_VERIFICATION", "false").lower() == "false",
-                enable_only_one_model=os.getenv("ENABLE_ONLY_ONE_MODEL", "true").lower() == "true",
+                enable_only_one_model=os.getenv("ENABLE_ONLY_ONE_MODEL", "false").lower() == "true",
                 generator_work_type=os.getenv("GENERATOR_WORK_TYPE", "standart"),
-                is_first_model_ollama=os.getenv("IS_FIRST_MODEL_OLLAMA", "false").lower() == "true",
-                is_second_model_ollama=os.getenv("IS_SECOND_MODEL_OLLAMA", "false").lower() == "true",
             ),
             solver=SolverConfig(
                 hard_definition_of_parse=os.getenv("hard_definition_of_parse", "false").lower() == "true",

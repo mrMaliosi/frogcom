@@ -68,10 +68,6 @@ class OrchestrationRoutes(BaseRoutes):
                 config.orchestration.enable_only_one_model = body.enable_only_one_model
             if body.generator_work_type is not None:
                 config.orchestration.generator_work_type = body.generator_work_type
-            if body.is_first_model_ollama is not None:
-                config.orchestration.is_first_model_ollama = body.is_first_model_ollama
-            if body.is_second_model_ollama is not None:
-                config.orchestration.is_second_model_ollama = body.is_second_model_ollama
 
             updated = OrchestrationConfigResponse(
                 enabled=config.orchestration.enabled,
